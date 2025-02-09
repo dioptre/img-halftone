@@ -1,6 +1,5 @@
 **/node_modules
 **/dist
-**/img
 **/vite.config.ts.*.mjs
 *.tgz
 *.log

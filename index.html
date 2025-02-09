@@ -59,7 +59,7 @@
         <div class="dot yellow"></div>
         <div class="dot black"></div>
     </div>
-    <img-halftone src="./img/friut.jpeg" shape="circle"></img-halftone>
+    <img-halftone src="./img/fruit.jpg" shape="circle"></img-halftone>
 
     <!--
     <script type="module" src="https://cdn.skypack.dev/@9am/img-halftone"></script>
@@ -68,8 +68,28 @@
     <script type="module">
         import './src/index.ts';
 
-        document.querySelector('button').addEventListener('click', () => {
-            document.querySelector('img-halftone').src = "/img/lamp2.webp";
+        const halftone = document.querySelector('img-halftone');
+        const button = document.querySelector('button');
+
+        // Listen for all events
+        halftone.addEventListener('loading', (e) => {
+            console.log('🎨 Image loading started');
+        });
+
+        halftone.addEventListener('loaded', (e) => {
+            console.log('✅ Image loaded', e.detail);
+        });
+
+        halftone.addEventListener('canvasready', (e) => {
+            console.log('🎯 Canvas ready', e.detail);
+        });
+
+        halftone.addEventListener('paintcomplete', (e) => {
+            console.log('🎉 Painting complete');
+        });
+
+        button.addEventListener('click', () => {
+            halftone.src = "/img/lamp.jpg";
         });
     </script>
 </body>

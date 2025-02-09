@@ -58,11 +58,23 @@ class ImgHalftone extends HTMLElement {
                 }
                 try {
                     this.shadowRoot!.host.classList.add('loading');
+                    this.dispatchEvent(new CustomEvent('loading', {
+                        bubbles: true,
+                        composed: true
+                    }));
+                    
                     const img = await ImgHalftone.loadImage(this.src);
                     img.setAttribute('alt', this.alt);
                     // replace bg
                     this.img!.parentNode!.replaceChild(img, this.img!);
                     this.img = img;
+
+                    // Emit loaded event
+                    this.dispatchEvent(new CustomEvent('loaded', {
+                        bubbles: true,
+                        composed: true,
+                        detail: { width: img.width, height: img.height }
+                    }));
 
                     // limit max pixel
                     const source = <HTMLImageElement>this.img.cloneNode();
@@ -90,10 +102,25 @@ class ImgHalftone extends HTMLElement {
     private async update({ source }: { source: HTMLImageElement }) {
         const size = this.cellsize;
         const cellSize: Pair = [size, size];
+        
+        // Emit canvas ready event before starting to paint
+        this.dispatchEvent(new CustomEvent('canvasready', {
+            bubbles: true,
+            composed: true,
+            detail: { width: source.width, height: source.height }
+        }));
+
         await Promise.all(
             this.channels.map((channel) => channel.update({ source, cellSize }))
         );
-        this.painter.draw(this.channels, [source!.width, source!.height]);
+        
+        await this.painter.draw(this.channels, [source!.width, source!.height]);
+        
+        // Emit paint complete event
+        this.dispatchEvent(new CustomEvent('paintcomplete', {
+            bubbles: true,
+            composed: true
+        }));
     }
 
     connectedCallback() {
