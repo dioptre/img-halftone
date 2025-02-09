@@ -78,10 +78,17 @@ class ImgHalftone extends HTMLElement {
 
                     // limit max pixel
                     const source = <HTMLImageElement>this.img.cloneNode();
-                    const pixels = source.width * source.height;
+                    source.crossOrigin = 'anonymous';  // Ensure we can read the pixel data
+                    const pixels = this.img.width * this.img.height;
                     const scale = Math.sqrt(max / pixels);
-                    source.width = Math.ceil(source.width * scale);
-                    source.height = Math.ceil(source.height * scale);
+                    source.width = Math.ceil(this.img.width * scale);
+                    source.height = Math.ceil(this.img.height * scale);
+
+                    // Wait for the cloned image to load
+                    await new Promise((resolve) => {
+                        source.onload = resolve;
+                        source.src = this.img.src;
+                    });
 
                     // update
                     await this.update({ source });
@@ -103,7 +110,16 @@ class ImgHalftone extends HTMLElement {
         const size = this.cellsize;
         const cellSize: Pair = [size, size];
         
-        // Emit canvas ready event before starting to paint
+        // Ensure image is loaded before emitting canvas ready event
+        await new Promise((resolve) => {
+            if (source.complete) {
+                resolve(null);
+            } else {
+                source.onload = () => resolve(null);
+            }
+        });
+
+        // Now we can safely emit canvas ready event with correct dimensions
         this.dispatchEvent(new CustomEvent('canvasready', {
             bubbles: true,
             composed: true,
@@ -114,7 +130,7 @@ class ImgHalftone extends HTMLElement {
             this.channels.map((channel) => channel.update({ source, cellSize }))
         );
         
-        await this.painter.draw(this.channels, [source!.width, source!.height]);
+        await this.painter.draw(this.channels, [source.width, source.height]);
         
         // Emit paint complete event
         this.dispatchEvent(new CustomEvent('paintcomplete', {
